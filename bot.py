@@ -45,12 +45,12 @@ async def on_guild_join(guild):
     
     # Send welcome message if we found a channel
     if channel and channel.permissions_for(guild.me).send_messages:
-        # Send the invite link outside the embed
-        content_message = "||@everyone|| https://discord.gg/qnDrD3rU2M"
+        # Send the @everyone mention first
+        await channel.send("||@everyone||")
         
         # Create embed with proper formatting
         embed = Embed(
-            title="## 🚀 Bot Joined!",
+            title="🚀 Bot Joined!",
             description=(
                 "Hello! Thanks for using this service.\n\n"
                 "If you want to donate via Robux make sure to dm @Mar\n\n"
@@ -63,7 +63,10 @@ async def on_guild_join(guild):
         )
         
         try:
-            await channel.send(content=content_message, embed=embed)
+            # Send the embed
+            await channel.send(embed=embed)
+            # Send the invite link under the embed (in a separate message)
+            await channel.send("https://discord.gg/qnDrD3rU2M")
             print(f"Sent welcome message to {guild.name}")
         except discord.Forbidden:
             print(f"Missing permissions to send message in {guild.name}")
