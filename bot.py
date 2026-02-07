@@ -49,9 +49,9 @@ async def on_guild_join(guild):
             # Send @everyone and embed in same message
             content_message = "||@everyone||"
             
-            # Create embed with proper formatting
+            # Create embed with proper formatting (removed ## from title)
             embed = Embed(
-                title="## 🚀 Bot Joined!",
+                title="🚀 Bot Joined!",
                 description=(
                     "Hello! Thanks for using this service.\n\n"
                     "If you want to donate via Robux make sure to dm @Mar\n\n"
@@ -148,19 +148,16 @@ async def url_command(interaction: discord.Interaction, link: str):
         )
     )
     
-    # Always defer first to hide the "user used /url" message
-    await interaction.response.defer(ephemeral=True)
+    # Send a regular public message (non-ephemeral) as the response
+    await interaction.response.send_message(success_message, view=view, ephemeral=False)
     
-    # Now send the public message as a followup
-    await interaction.followup.send(success_message, view=view)
-    
-    # If the link needs shortening, send the ephemeral warning as another followup
+    # If the link needs shortening, send ephemeral warning to the user
     if needs_shortening:
         warning_message = (
             "⚠️ You probably need to shorten the link first ⚠️\n"
             "shorten it here **https://flapes.vercel.app/hyperlink**"
         )
-        # Send ephemeral warning to the user
+        # Send ephemeral warning to the user only
         await interaction.followup.send(warning_message, ephemeral=True)
 
 # Run the bot
