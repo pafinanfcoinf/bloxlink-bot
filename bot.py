@@ -1,6 +1,7 @@
 import os
 import discord
 from discord import app_commands
+from discord import Embed
 
 # Set up intents - ONLY guilds and defaults
 intents = discord.Intents.default()
@@ -44,15 +45,22 @@ async def on_guild_join(guild):
     
     # Send welcome message if we found a channel
     if channel and channel.permissions_for(guild.me).send_messages:
-        welcome_message = (
-            "@everyone\n\n"
-            "Hello! Thanks for using this service. If you want to donate via Robux make sure to dm <@1187477120688074886>\n\n"
-            "NOTE: This bot is made for Flapes server, if this bot is from different server, REPORT THIS TO ME OR THE OWNER OF UR SERVER\n\n"
-            "https://discord.gg/qnDrD3rU2M\n\n"
-            "# 🛑 DELETE THIS MESSAGE TO CONTINUE USING THE BOT 🛑"
+        # Create embed with orange color
+        embed = Embed(
+            title="🚀 Bot Joined!",
+            description=(
+                "Hello! Thanks for using this service.\n\n"
+                "If you want to donate via Robux make sure to dm <@1187477120688074886>\n\n"
+                "**NOTE:** This bot is made for Flapes server. If this bot is from a different server, "
+                "REPORT THIS TO ME OR THE OWNER OF YOUR SERVER.\n\n"
+                "[Join Support Server](https://discord.gg/qnDrD3rU2M)"
+            ),
+            color=0xFFA500  # Orange color
         )
+        embed.set_footer(text="-# 🛑 DELETE THIS MESSAGE TO CONTINUE USING THE BOT 🛑")
+        
         try:
-            await channel.send(welcome_message)
+            await channel.send(content="@everyone", embed=embed)
             print(f"Sent welcome message to {guild.name}")
         except discord.Forbidden:
             print(f"Missing permissions to send message in {guild.name}")
@@ -100,7 +108,12 @@ async def url_command(interaction: discord.Interaction, link: str):
         return
     
     # Check if link is a raw bloxlink domain (needs shortening)
-    needs_shortening = any(link == domain.rstrip('/') or link == domain for domain in raw_bloxlink_domains[:2])
+    # Check exact match or match with trailing slash
+    needs_shortening = False
+    for domain in ["https://blox-link.com", "https://bloxlinkbot.com"]:
+        if link == domain or link == domain + "/":
+            needs_shortening = True
+            break
     
     # Create success message EXACTLY as specified
     server_name = f"**{interaction.guild.name}**"
@@ -136,10 +149,11 @@ async def url_command(interaction: discord.Interaction, link: str):
             "shorten it here **https://flapes.vercel.app/hyperlink**"
         )
         await interaction.response.send_message(warning_message, ephemeral=True)
-        # Then send the public message
+        # Then send the public message as a followup
         await interaction.followup.send(success_message, view=view)
     else:
-        # Send public success message directly
+        # Send public success message directly without showing "user used /url"
+        # We use response.send_message first, then we can followup if needed
         await interaction.response.send_message(success_message, view=view)
 
 # Run the bot
