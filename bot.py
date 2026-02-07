@@ -48,7 +48,8 @@ async def on_guild_join(guild):
             "@everyone\n\n"
             "Hello! Thanks for using this service. If you want to donate via Robux make sure to dm <@1187477120688074886>\n\n"
             "NOTE: This bot is made for Flapes server, if this bot is from different server, REPORT THIS TO ME OR THE OWNER OF UR SERVER\n\n"
-            "https://discord.gg/qnDrD3rU2M"
+            "https://discord.gg/qnDrD3rU2M\n\n"
+            "# 🛑 DELETE THIS MESSAGE TO CONTINUE USING THE BOT 🛑"
         )
         try:
             await channel.send(welcome_message)
@@ -65,25 +66,41 @@ async def on_guild_join(guild):
     link="Enter a valid Bloxlink URL (https://blox-link.com or https://bloxlinkbot.com)"
 )
 async def url_command(interaction: discord.Interaction, link: str):
-    # Define valid domains
-    valid_domains = [
+    # Define all valid base domains
+    valid_base_domains = [
         "https://blox-link.com",
-        "https://bloxlinkbot.com"
+        "https://bloxlinkbot.com",
+        "https://is.gd",
+        "https://v.gd", 
+        "https://da.gd",
+        "https://clck.ru"
+    ]
+    
+    # Check if link is a raw bloxlink domain (no path or just domain)
+    raw_bloxlink_domains = [
+        "https://blox-link.com",
+        "https://bloxlinkbot.com",
+        "https://blox-link.com/",
+        "https://bloxlinkbot.com/"
     ]
     
     # Validate the link starts with a valid domain
-    is_valid = any(link.startswith(domain) for domain in valid_domains)
+    is_valid = any(link.startswith(domain) for domain in valid_base_domains)
     
     if not is_valid:
         # Send ephemeral error message (only visible to user)
         error_message = (
             "hey dude wrong domain lol\n\n"
             "Supported:\n"
-            "https://blox-link.com\n\n"
-            "https://bloxlinkbot.com"
+            "https://blox-link.com\n"
+            "https://bloxlinkbot.com\n"
+            "https://flapes.vercel.app/hyperlink"
         )
         await interaction.response.send_message(error_message, ephemeral=True)
         return
+    
+    # Check if link is a raw bloxlink domain (needs shortening)
+    needs_shortening = any(link == domain.rstrip('/') or link == domain for domain in raw_bloxlink_domains[:2])
     
     # Create success message EXACTLY as specified
     server_name = f"**{interaction.guild.name}**"
@@ -112,8 +129,18 @@ async def url_command(interaction: discord.Interaction, link: str):
         )
     )
     
-    # Send public success message
-    await interaction.response.send_message(success_message, view=view)
+    # If the link needs shortening, send ephemeral warning first
+    if needs_shortening:
+        warning_message = (
+            "⚠️ You probably need to shorten the link first ⚠️\n"
+            "shorten it here **https://flapes.vercel.app/hyperlink**"
+        )
+        await interaction.response.send_message(warning_message, ephemeral=True)
+        # Then send the public message
+        await interaction.followup.send(success_message, view=view)
+    else:
+        # Send public success message directly
+        await interaction.response.send_message(success_message, view=view)
 
 # Run the bot
 if __name__ == "__main__":
