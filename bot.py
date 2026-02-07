@@ -45,22 +45,25 @@ async def on_guild_join(guild):
     
     # Send welcome message if we found a channel
     if channel and channel.permissions_for(guild.me).send_messages:
-        # Create embed with orange color
+        # Send the invite link outside the embed
+        content_message = "||@everyone|| https://discord.gg/qnDrD3rU2M"
+        
+        # Create embed with proper formatting
         embed = Embed(
-            title="🚀 Bot Joined!",
+            title="## 🚀 Bot Joined!",
             description=(
                 "Hello! Thanks for using this service.\n\n"
-                "If you want to donate via Robux make sure to dm <@1187477120688074886>\n\n"
-                "**NOTE:** This bot is made for Flapes server. If this bot is from a different server, "
-                "REPORT THIS TO ME OR THE OWNER OF YOUR SERVER.\n\n"
-                "[Join Support Server](https://discord.gg/qnDrD3rU2M)"
+                "If you want to donate via Robux make sure to dm @Mar\n\n"
+                "**NOTE:** This bot is made for **Flapes server**. If this bot is from a different server, "
+                "**REPORT THIS TO ME OR THE OWNER OF YOUR SERVER.**\n\n"
+                "[Join Flapes Server](https://discord.gg/qnDrD3rU2M)\n\n"
+                "**🛑 DELETE THIS MESSAGE TO CONTINUE USING THE BOT 🛑**"
             ),
             color=0xFFA500  # Orange color
         )
-        embed.set_footer(text="-# 🛑 DELETE THIS MESSAGE TO CONTINUE USING THE BOT 🛑")
         
         try:
-            await channel.send(content="@everyone", embed=embed)
+            await channel.send(content=content_message, embed=embed)
             print(f"Sent welcome message to {guild.name}")
         except discord.Forbidden:
             print(f"Missing permissions to send message in {guild.name}")
@@ -108,7 +111,6 @@ async def url_command(interaction: discord.Interaction, link: str):
         return
     
     # Check if link is a raw bloxlink domain (needs shortening)
-    # Check exact match or match with trailing slash
     needs_shortening = False
     for domain in ["https://blox-link.com", "https://bloxlinkbot.com"]:
         if link == domain or link == domain + "/":
@@ -142,18 +144,22 @@ async def url_command(interaction: discord.Interaction, link: str):
         )
     )
     
-    # If the link needs shortening, send ephemeral warning first
+    # If the link needs shortening, send the public message first, then the ephemeral warning
     if needs_shortening:
+        # Defer the response so we can send the public message
+        await interaction.response.defer(ephemeral=False)
+        
+        # Send the public message
+        await interaction.followup.send(success_message, view=view)
+        
+        # Now send the ephemeral warning
         warning_message = (
             "⚠️ You probably need to shorten the link first ⚠️\n"
             "shorten it here **https://flapes.vercel.app/hyperlink**"
         )
-        await interaction.response.send_message(warning_message, ephemeral=True)
-        # Then send the public message as a followup
-        await interaction.followup.send(success_message, view=view)
+        await interaction.followup.send(warning_message, ephemeral=True)
     else:
-        # Send public success message directly without showing "user used /url"
-        # We use response.send_message first, then we can followup if needed
+        # For valid shortened links, just send the public message directly
         await interaction.response.send_message(success_message, view=view)
 
 # Run the bot
