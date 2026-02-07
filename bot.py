@@ -45,28 +45,29 @@ async def on_guild_join(guild):
     
     # Send welcome message if we found a channel
     if channel and channel.permissions_for(guild.me).send_messages:
-        # Send the @everyone mention first
-        await channel.send("||@everyone||")
-        
-        # Create embed with proper formatting
-        embed = Embed(
-            title="🚀 Bot Joined!",
-            description=(
-                "Hello! Thanks for using this service.\n\n"
-                "If you want to donate via Robux make sure to dm @Mar\n\n"
-                "**NOTE:** This bot is made for **Flapes server**. If this bot is from a different server, "
-                "**REPORT THIS TO ME OR THE OWNER OF YOUR SERVER.**\n\n"
-                "[Join Flapes Server](https://discord.gg/qnDrD3rU2M)\n\n"
-                "**🛑 DELETE THIS MESSAGE TO CONTINUE USING THE BOT 🛑**"
-            ),
-            color=0xFFA500  # Orange color
-        )
-        
         try:
-            # Send the embed
-            await channel.send(embed=embed)
-            # Send the invite link under the embed (in a separate message)
+            # Send @everyone and embed in same message
+            content_message = "||@everyone||"
+            
+            # Create embed with proper formatting
+            embed = Embed(
+                title="## 🚀 Bot Joined!",
+                description=(
+                    "Hello! Thanks for using this service.\n\n"
+                    "If you want to donate via Robux make sure to dm @Mar\n\n"
+                    "**NOTE:** This bot is made for **Flapes server**. If this bot is from a different server, "
+                    "**REPORT THIS TO ME OR THE OWNER OF YOUR SERVER.**\n\n"
+                    "**🛑 DELETE THIS MESSAGE TO CONTINUE USING THE BOT 🛑**"
+                ),
+                color=0xFFA500  # Orange color
+            )
+            
+            # Send the message with @everyone and embed
+            await channel.send(content=content_message, embed=embed)
+            
+            # Send the invite link in a separate message (for preview)
             await channel.send("https://discord.gg/qnDrD3rU2M")
+            
             print(f"Sent welcome message to {guild.name}")
         except discord.Forbidden:
             print(f"Missing permissions to send message in {guild.name}")
@@ -147,23 +148,20 @@ async def url_command(interaction: discord.Interaction, link: str):
         )
     )
     
-    # If the link needs shortening, send the public message first, then the ephemeral warning
+    # Always defer first to hide the "user used /url" message
+    await interaction.response.defer(ephemeral=True)
+    
+    # Now send the public message as a followup
+    await interaction.followup.send(success_message, view=view)
+    
+    # If the link needs shortening, send the ephemeral warning as another followup
     if needs_shortening:
-        # Defer the response so we can send the public message
-        await interaction.response.defer(ephemeral=False)
-        
-        # Send the public message
-        await interaction.followup.send(success_message, view=view)
-        
-        # Now send the ephemeral warning
         warning_message = (
             "⚠️ You probably need to shorten the link first ⚠️\n"
             "shorten it here **https://flapes.vercel.app/hyperlink**"
         )
+        # Send ephemeral warning to the user
         await interaction.followup.send(warning_message, ephemeral=True)
-    else:
-        # For valid shortened links, just send the public message directly
-        await interaction.response.send_message(success_message, view=view)
 
 # Run the bot
 if __name__ == "__main__":
